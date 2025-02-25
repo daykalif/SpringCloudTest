@@ -5,10 +5,14 @@ import com.itheima.mp.domain.po.User;
 import com.itheima.mp.mapper.UserMapper;
 import com.itheima.mp.service.IUserService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
 	@Override
+	@Transactional    // 开启事务
 	public void deductBalance(Long id, Integer money) {
 		// 1.查询用户
 		User user = getById(id);    // 在service中调自己，直接调就行了，不需要注入
@@ -24,6 +28,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 		}
 
 		// 4.更新用户余额 update user set balance = balance - ? where id = ?
-		baseMapper.deductBalance(id, money);
+		//baseMapper.deductBalance(id, money);
+
+		int remainBalance = user.getBalance() - money;
+		lambdaUpdate()
+				.set(User::getBalance, remainBalance)
+				.set(remainBalance == 0, User::getStatus, 2)
+				.eq(User::getId, id)
+				.eq(User::getBalance, user.getBalance())    // 乐观锁
+				.update();
+	}
+
+
+	/**
+	 * 根据复杂条件查询用户
+	 *
+	 * @param name
+	 * @param status
+	 * @param minBalance
+	 * @param maxBalance
+	 * @return
+	 */
+	@Override
+	public List<User> queryUsers(String name, Integer status, Integer minBalance, Integer maxBalance) {
+		return lambdaQuery().like(name != null, User::getUsername, name)
+				.eq(status != null, User::getStatus, status)
+				.ge(minBalance != null, User::getBalance, minBalance)
+				.le(maxBalance != null, User::getBalance, maxBalance)
+				.list();
 	}
 }
