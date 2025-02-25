@@ -27,7 +27,7 @@ public class User {
 	/**
 	 * 密码
 	 */
-	@TableField(exist = false)  // 不映射到数据库字段
+	//@TableField(exist = false)  // 不映射到数据库字段
 	private String password;
 
 	/**
