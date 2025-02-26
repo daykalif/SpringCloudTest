@@ -42,10 +42,12 @@ public class UserController {
 	@ApiOperation("根据id查询用户接口")
 	@GetMapping("{id}")
 	public UserVO queryUserById(@ApiParam("用户id") @PathVariable("id") Long id) {
-		// 1.查询用户PO
-		User user = userService.getById(id);
-		// 2.把PO拷贝到VO
-		return BeanUtil.copyProperties(user, UserVO.class);
+		//// 1.查询用户PO
+		//User user = userService.getById(id);
+		//// 2.把PO拷贝到VO
+		//return BeanUtil.copyProperties(user, UserVO.class);
+
+		return userService.queryUserAndAddressById(id);
 	}
 
 
