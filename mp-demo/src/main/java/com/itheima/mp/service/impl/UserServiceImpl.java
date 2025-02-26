@@ -8,6 +8,7 @@ import com.itheima.mp.domain.po.Address;
 import com.itheima.mp.domain.po.User;
 import com.itheima.mp.domain.vo.AddressVO;
 import com.itheima.mp.domain.vo.UserVO;
+import com.itheima.mp.enums.UserStatus;
 import com.itheima.mp.mapper.UserMapper;
 import com.itheima.mp.service.IUserService;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 		User user = getById(id);    // 在service中调自己，直接调就行了，不需要注入
 
 		// 2.校验用户状态
-		if (user == null || user.getStatus() == 2) {
+		if (user == null || user.getStatus() == UserStatus.FROZEN) {
 			throw new RuntimeException("用户状态异常！");
 		}
 
@@ -40,7 +41,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 		int remainBalance = user.getBalance() - money;
 		lambdaUpdate()
 				.set(User::getBalance, remainBalance)
-				.set(remainBalance == 0, User::getStatus, 2)
+				.set(remainBalance == 0, User::getStatus, UserStatus.FROZEN)
 				.eq(User::getId, id)
 				.eq(User::getBalance, user.getBalance())    // 乐观锁
 				.update();
@@ -69,7 +70,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 	public UserVO queryUserAndAddressById(Long id) {
 		// 1.查询用户
 		User user = getById(id);
-		if (user == null || user.getStatus() == 2) {
+		if (user == null || user.getStatus() == UserStatus.FROZEN) {
 			throw new RuntimeException("用户状态异常！");
 		}
 
