@@ -9,8 +9,14 @@ logging:
     com.itheima: debug
   pattern:
     dateformat: HH:mm:ss
-mybatis:
-  mapper-locations: classpath*:mapper/*.xml
+#mybatis:
+#  mapper-locations: classpath*:mapper/*.xml
+mybatis-plus:
+  type-aliases-package: com.itheima.mp.domain.po
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted # 逻辑删除字段名
 knife4j:
   enable: true
   openapi:
