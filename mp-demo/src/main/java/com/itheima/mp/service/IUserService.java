@@ -12,4 +12,6 @@ public interface IUserService extends IService<User> {
 	List<User> queryUsers(String name, Integer status, Integer minBalance, Integer maxBalance);
 
 	UserVO queryUserAndAddressById(Long id);
+
+	List<UserVO> queryUserAndAddressByIds(List<Long> ids);
 }

@@ -13,7 +13,8 @@ import com.itheima.mp.service.IUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
@@ -86,5 +87,44 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 		}
 
 		return userVO;
+	}
+
+	@Override
+	public List<UserVO> queryUserAndAddressByIds(List<Long> ids) {
+		// 1.查询用户
+		List<User> users = listByIds(ids);
+		if (CollUtil.isEmpty(users)) {
+			return Collections.emptyList();
+		}
+
+		// 2.查询地址
+		// 2.1 获取用户id集合
+		List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
+		// 2.2 根据用户id查询地址
+		List<Address> addresses = Db.lambdaQuery(Address.class)
+				.in(Address::getUserId, userIds)
+				.list();
+		// 2.3 转换地址VO
+		List<AddressVO> addressVOList = BeanUtil.copyToList(addresses, AddressVO.class);
+		// 2.4 用户地址集合分组处理，相同用户的放入一个集合（组）中
+		Map<Long, List<AddressVO>> addressMap = new HashMap<>(0);
+		if (CollUtil.isNotEmpty(addressVOList)) {
+			addressMap = addressVOList.stream().collect(Collectors.groupingBy(AddressVO::getUserId));
+		}
+
+
+		// 3.转VO返回
+		List<UserVO> list = new ArrayList<>(users.size());
+		for (User user : users) {
+			// 3.1 转User的PO为VO
+			UserVO vo = BeanUtil.copyProperties(user, UserVO.class);
+			list.add(vo);
+			// 3.2 转Address的PO为VO
+			if (CollUtil.isNotEmpty(addresses)) {
+				vo.setAddresses(addressMap.get(user.getId()));
+			}
+		}
+
+		return list;
 	}
 }
