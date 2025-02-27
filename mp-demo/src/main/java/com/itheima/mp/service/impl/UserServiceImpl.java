@@ -140,17 +140,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 		Integer status = query.getStatus();
 
 		// 1.构建分页条件
-		Page<User> page = Page.of(query.getPageNo(), query.getPageSize());
-
-		// 2.构建排序条件
-		if (StrUtil.isNotBlank(query.getSortBy())) {
-			// 不为空
-			page.addOrder(new OrderItem(query.getSortBy(), query.getIsAsc()));
-		} else {
-			// 为空，默认按照更新时间排序
-			page.addOrder(new OrderItem("update_time", false));
-		}
-
+		Page<User> page = query.toMpPageDefaultSortByUpdateTime();
 
 		// 2.分页查询
 		Page<User> p = lambdaQuery()
@@ -159,21 +149,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 				.page(page);
 
 		// 3.封装VO结果
-		PageDTO<UserVO> dto = new PageDTO<>();
-		// 3.1 总条数
-		dto.setTotal(p.getTotal());
-		// 3.2 总页数
-		dto.setPages(p.getPages());
-		// 3.3 当前页数据
-		List<User> records = p.getRecords();
-		if (CollUtil.isEmpty(records)) {
-			dto.setList(Collections.emptyList());
-			return dto;
-		}
-		// 3.4 转换为VO
-		dto.setList(BeanUtil.copyToList(records, UserVO.class));
-
-		// 4.返回
-		return dto;
+		return PageDTO.of(p, user -> {
+			// 1.拷贝基础属性
+			UserVO vo = BeanUtil.copyProperties(user, UserVO.class);
+			// 2.处理特殊逻辑
+			vo.setUsername(vo.getUsername().substring(0, vo.getUsername().length() - 2) + "**");
+			return vo;
+		});
 	}
 }
